@@ -1,32 +1,27 @@
 import React, { useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
-// Import your Bebop Engine!
+
+// @ts-ignore - Bypassing strict TS for the local JS engine
 import { calculateProfit } from '../../engine/calculator';
 
 export default function WoolongCalculator() {
-  // 1. State for User Inputs
-  const [salePrice, setSalePrice] = useState('');
-  const [shippingCharged, setShippingCharged] = useState('');
-  const [itemCost, setItemCost] = useState('');
-  const [actualShippingCost, setActualShippingCost] = useState('');
-  const [category, setCategory] = useState('standard');
-  
-  // 2. State for Engine Results
-  const [results, setResults] = useState(null);
+  const [salePrice, setSalePrice] = useState<string>('');
+  const [shippingCharged, setShippingCharged] = useState<string>('');
+  const [itemCost, setItemCost] = useState<string>('');
+  const [actualShippingCost, setActualShippingCost] = useState<string>('');
+  const [category, setCategory] = useState<string>('standard');
+  const [results, setResults] = useState<any>(null);
 
-  // 3. The Calculate Trigger
   const handleCalculate = () => {
     try {
-      // Convert text inputs to numbers, defaulting to 0 if empty
       const price = parseFloat(salePrice) || 0;
       const shipCharge = parseFloat(shippingCharged) || 0;
       const cost = parseFloat(itemCost) || 0;
       const shipCost = parseFloat(actualShippingCost) || 0;
 
-      // Run the Bebop Engine
       const profitData = calculateProfit(price, shipCharge, cost, shipCost, category);
       setResults(profitData);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Calculation Error:", error);
     }
   };
@@ -40,7 +35,6 @@ export default function WoolongCalculator() {
         <Text className="text-3xl font-bold text-white mb-2">Woolong ROI</Text>
         <Text className="text-slate-400 mb-8">Profit Engine • Milestone 1</Text>
 
-        {/* --- INPUT FORM --- */}
         <View className="space-y-4 mb-8">
           <View>
             <Text className="text-slate-300 font-semibold mb-1">Sale Price ($)</Text>
@@ -79,7 +73,6 @@ export default function WoolongCalculator() {
             </View>
           </View>
 
-          {/* Category Selector (Simplified for MVP) */}
           <Text className="text-slate-300 font-semibold mt-4 mb-1">Category</Text>
           <View className="flex-row space-x-2">
             <TouchableOpacity 
@@ -98,7 +91,6 @@ export default function WoolongCalculator() {
           </View>
         </View>
 
-        {/* --- CALCULATE BUTTON --- */}
         <TouchableOpacity 
           onPress={handleCalculate}
           className="bg-emerald-500 p-4 rounded-xl shadow-lg mb-8"
@@ -106,7 +98,6 @@ export default function WoolongCalculator() {
           <Text className="text-center text-white font-bold text-xl">Calculate Net Profit</Text>
         </TouchableOpacity>
 
-        {/* --- RESULTS DASHBOARD --- */}
         {results && (
           <View className="bg-slate-800 p-6 rounded-2xl border border-slate-700 mb-12">
             <Text className="text-slate-400 font-semibold uppercase tracking-wider mb-4">Transaction Breakdown</Text>

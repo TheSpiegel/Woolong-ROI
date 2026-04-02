@@ -1,50 +1,30 @@
-# Welcome to your Expo app 👋
+# Woolong ROI
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Woolong ROI is a mobile app I built to help eBay and marketplace sellers track their exact net profits. 
 
-## Get started
+### The Backstory
+My dad is an active eBay seller. Watching him source inventory at thrift stores, I realized that trying to calculate true profit margins on the fly is a massive pain. You have to factor in item costs, shipping, and constantly shifting eBay category fees. Spreadsheets are clunky to use on a phone while walking down an aisle, so I built this to solve his exact problem. 
 
-1. Install dependencies
+(The name is a nod to the currency used in *Cowboy Bebop*, but the tool itself is all business).
 
-   ```bash
-   npm install
-   ```
+### How It Works (The Math Engine)
+The core of this app is what I call the "Bebop Engine." I completely separated the math logic from the visual interface. 
 
-2. Start the app
+eBay has weird, highly specific fee structures (like an 8% discount for sneakers over $150, or a $7,500 maximum fee cap for luxury watches). I isolated all of those variables into a central `fee_config.json`. This way, when eBay inevitably changes their policies next year, I only have to update a single file rather than tearing apart my React components. 
 
-   ```bash
-   npx expo start
-   ```
+### The Tech Stack
+I built this for my Senior CS Capstone to prove I can handle a full-stack, mobile-first environment:
 
-In the output, you'll find options to open the app in a
+* **Frontend:** Built with **Expo (React Native)**. Resellers need a fast, tactile app they can use with one hand. A standard web app just wasn't going to cut it.
+* **Styling:** **NativeWind** (Tailwind CSS) to keep the UI clean and the codebase uncluttered. 
+* **Backend & Database:** **Supabase (PostgreSQL)**. I needed a true relational database to link user inventory with category fees. I chose this over a NoSQL option like Firebase because document databases get messy fast with relational data.
+* **Security:** I'm using Supabase's built-in Row Level Security (RLS) to ensure every user's financial data is completely isolated.
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+### What's Next
+Right now, the app is a rock-solid manual calculator. Moving forward, I am working on:
+* **eBay API Integration:** Syncing live sales data directly to the app.
+* **OCR Scanning:** Using the phone's camera to scan physical receipts and auto-fill the "Cost of Goods" data.
+* **Tax Exports:** Generating a simple CSV at the end of the year so my dad can just hand it to his accountant.
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
-```
-
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
-
-## Learn more
-
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+---
+**Matthew Spiegel** *Southern Nazarene University - Senior CS Capstone (2026)*
