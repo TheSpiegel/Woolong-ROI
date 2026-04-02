@@ -1,0 +1,26 @@
+{
+    "fixed_order_fee": 0.30,
+    "max_fee_cap": 7500.00,
+    "categories": {
+      "standard": {
+        "rate": 0.1325,
+        "description": "Standard rate for most categories"
+      },
+      "electronics": {
+        "rate": 0.08,
+        "description": "Computers, Tablets & Networking equipment"
+      },
+      "sneakers_under_150": {
+        "rate": 0.1325,
+        "description": "Men's and Women's Athletic Shoes under $150"
+      },
+      "sneakers_over_150": {
+        "rate": 0.08,
+        "description": "Men's and Women's Athletic Shoes $150 and over"
+      },
+      "media": {
+        "rate": 0.146,
+        "description": "Books, DVDs, Movies, Music (requires different fixed fee logic later)"
+      }
+    }
+  }

@@ -1,124 +1,177 @@
 import React, { useState } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
-
-// @ts-ignore - Bypassing strict TS for the local JS engine
+import { Alert, Platform, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+// @ts-ignore
 import { calculateProfit } from '../../engine/calculator';
+import { supabase } from '../../lib/supabase';
 
 export default function WoolongCalculator() {
-  const [salePrice, setSalePrice] = useState<string>('');
-  const [shippingCharged, setShippingCharged] = useState<string>('');
-  const [itemCost, setItemCost] = useState<string>('');
-  const [actualShippingCost, setActualShippingCost] = useState<string>('');
-  const [category, setCategory] = useState<string>('standard');
+  const [salePrice, setSalePrice] = useState('');
+  const [itemCost, setItemCost] = useState('');
+  const [shipCost, setShipCost] = useState('');
+  const [category, setCategory] = useState('standard');
   const [results, setResults] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
 
-  const handleCalculate = () => {
+  /* OBSERVATION 
+  * onCalculate handles the math locally using the "engine"
+  * onSaveFlip sends that math to the cloud (Supabase)
+  * We use Alert.alert to give the user immediate feedback
+  */
+
+  const onCalculate = () => {
+    const price = parseFloat(salePrice) || 0;
+    const cost = parseFloat(itemCost) || 0;
+    const shipping = parseFloat(shipCost) || 0;
+    
+    const data = calculateProfit(price, 0, cost, shipping, category);
+    setResults(data);
+  };
+
+  const onSaveFlip = async () => {
+    if (!results) {
+      Alert.alert("Wait!", "Calculate the profit before saving.");
+      return;
+    }
+
+    setLoading(true);
     try {
-      const price = parseFloat(salePrice) || 0;
-      const shipCharge = parseFloat(shippingCharged) || 0;
-      const cost = parseFloat(itemCost) || 0;
-      const shipCost = parseFloat(actualShippingCost) || 0;
+      const { data: { user } } = await supabase.auth.getUser();
 
-      const profitData = calculateProfit(price, shipCharge, cost, shipCost, category);
-      setResults(profitData);
+      const { error } = await supabase
+        .from('inventory')
+        .insert([
+          {
+            item_name: "New Flip", 
+            sale_price: parseFloat(salePrice),
+            item_cost: parseFloat(itemCost),
+            shipping_cost: parseFloat(shipCost),
+            net_profit: results.netProfit,
+            user_id: user?.id
+          }
+        ]);
+
+      if (error) throw error;
+      Alert.alert("Success ✅", "Flip saved to your history!");
     } catch (error: any) {
-      console.error("Calculation Error:", error);
+      Alert.alert("Save Error", error.message);
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <KeyboardAvoidingView 
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'} 
-      className="flex-1 bg-slate-900"
-    >
-      <ScrollView className="flex-1 px-6 pt-12">
-        <Text className="text-3xl font-bold text-white mb-2">Woolong ROI</Text>
-        <Text className="text-slate-400 mb-8">Profit Engine • Milestone 1</Text>
+    <SafeAreaView style={styles.safeArea}>
+      <ScrollView contentContainerStyle={styles.container}>
+        <View style={styles.header}>
+          <Text style={styles.title}>Woolong ROI</Text>
+          <Text style={styles.subtitle}>Bebop Profit Engine v2.0</Text>
+        </View>
 
-        <View className="space-y-4 mb-8">
-          <View>
-            <Text className="text-slate-300 font-semibold mb-1">Sale Price ($)</Text>
-            <TextInput 
-              className="bg-slate-800 text-white p-4 rounded-lg text-lg border border-slate-700"
-              keyboardType="decimal-pad"
-              value={salePrice}
-              onChangeText={setSalePrice}
-              placeholder="0.00"
-              placeholderTextColor="#64748b"
-            />
-          </View>
+        <View style={styles.card}>
+          <Text style={styles.label}>Sale Price ($)</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="0.00"
+            placeholderTextColor="#64748b"
+            keyboardType="decimal-pad"
+            value={salePrice}
+            onChangeText={setSalePrice}
+          />
 
-          <View className="flex-row space-x-4">
-            <View className="flex-1">
-              <Text className="text-slate-300 font-semibold mb-1">Item Cost ($)</Text>
-              <TextInput 
-                className="bg-slate-800 text-white p-4 rounded-lg text-lg border border-slate-700"
+          <View style={styles.row}>
+            <View style={{ flex: 1, marginRight: 8 }}>
+              <Text style={styles.label}>Item Cost</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="0.00"
+                placeholderTextColor="#64748b"
                 keyboardType="decimal-pad"
                 value={itemCost}
                 onChangeText={setItemCost}
-                placeholder="0.00"
-                placeholderTextColor="#64748b"
               />
             </View>
-            <View className="flex-1 ml-4">
-              <Text className="text-slate-300 font-semibold mb-1">Shipping Cost ($)</Text>
-              <TextInput 
-                className="bg-slate-800 text-white p-4 rounded-lg text-lg border border-slate-700"
-                keyboardType="decimal-pad"
-                value={actualShippingCost}
-                onChangeText={setActualShippingCost}
+            <View style={{ flex: 1, marginLeft: 8 }}>
+              <Text style={styles.label}>Shipping</Text>
+              <TextInput
+                style={styles.input}
                 placeholder="0.00"
                 placeholderTextColor="#64748b"
+                keyboardType="decimal-pad"
+                value={shipCost}
+                onChangeText={setShipCost}
               />
             </View>
           </View>
 
-          <Text className="text-slate-300 font-semibold mt-4 mb-1">Category</Text>
-          <View className="flex-row space-x-2">
+          <Text style={styles.label}>eBay Category</Text>
+          <View style={styles.row}>
             <TouchableOpacity 
+              style={[styles.tabBtn, category === 'standard' && styles.activeTab]} 
               onPress={() => setCategory('standard')}
-              className={`p-3 rounded-lg border flex-1 ${category === 'standard' ? 'bg-indigo-600 border-indigo-500' : 'bg-slate-800 border-slate-700'}`}
             >
-              <Text className="text-white text-center font-semibold">Standard</Text>
+              <Text style={styles.tabText}>Standard</Text>
             </TouchableOpacity>
-            
             <TouchableOpacity 
+              style={[styles.tabBtn, category === 'sneakers_over_150' && styles.activeTab, { marginLeft: 10 }]} 
               onPress={() => setCategory('sneakers_over_150')}
-              className={`p-3 rounded-lg border flex-1 ml-2 ${category === 'sneakers_over_150' ? 'bg-indigo-600 border-indigo-500' : 'bg-slate-800 border-slate-700'}`}
             >
-              <Text className="text-white text-center font-semibold">Sneakers $150+</Text>
+              <Text style={styles.tabText}>Sneakers $150+</Text>
             </TouchableOpacity>
           </View>
         </View>
 
-        <TouchableOpacity 
-          onPress={handleCalculate}
-          className="bg-emerald-500 p-4 rounded-xl shadow-lg mb-8"
-        >
-          <Text className="text-center text-white font-bold text-xl">Calculate Net Profit</Text>
+        <TouchableOpacity style={styles.calcBtn} onPress={onCalculate}>
+          <Text style={styles.calcBtnText}>Calculate Profit</Text>
         </TouchableOpacity>
 
         {results && (
-          <View className="bg-slate-800 p-6 rounded-2xl border border-slate-700 mb-12">
-            <Text className="text-slate-400 font-semibold uppercase tracking-wider mb-4">Transaction Breakdown</Text>
-            
-            <View className="flex-row justify-between mb-2">
-              <Text className="text-slate-300 text-lg">Gross Revenue</Text>
-              <Text className="text-white text-lg">${results.totalRevenue}</Text>
+          <View style={styles.resultCard}>
+            <Text style={styles.resultHeader}>Calculation Summary</Text>
+            <View style={styles.resRow}>
+              <Text style={styles.resLabel}>Fees</Text>
+              <Text style={[styles.resVal, { color: '#fb7185' }]}>-${results.totalFees}</Text>
             </View>
-            
-            <View className="flex-row justify-between mb-4 pb-4 border-b border-slate-700">
-              <Text className="text-rose-400 text-lg">Total eBay Fees</Text>
-              <Text className="text-rose-400 text-lg">-${results.totalFees}</Text>
+            <View style={styles.divider} />
+            <View style={styles.resRow}>
+              <Text style={styles.netLabel}>Net Profit</Text>
+              <Text style={styles.netVal}>${results.netProfit}</Text>
             </View>
 
-            <View className="flex-row justify-between items-center">
-              <Text className="text-white font-bold text-2xl">Net Profit</Text>
-              <Text className="text-emerald-400 font-bold text-3xl">${results.netProfit}</Text>
-            </View>
+            <TouchableOpacity 
+              style={[styles.calcBtn, { backgroundColor: '#6366f1', marginTop: 20 }]} 
+              onPress={onSaveFlip}
+              disabled={loading}
+            >
+              <Text style={styles.calcBtnText}>{loading ? "Saving..." : "Save to History"}</Text>
+            </TouchableOpacity>
           </View>
         )}
       </ScrollView>
-    </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
+
+const styles = StyleSheet.create({
+  safeArea: { flex: 1, backgroundColor: '#0f172a' },
+  container: { padding: 20 },
+  header: { marginBottom: 25, marginTop: Platform.OS === 'ios' ? 0 : 40 },
+  title: { fontSize: 34, fontWeight: '900', color: '#f8fafc', letterSpacing: -1 },
+  subtitle: { fontSize: 16, color: '#94a3b8', fontWeight: '500' },
+  card: { backgroundColor: '#1e293b', padding: 20, borderRadius: 18, borderWidth: 1, borderColor: '#334155' },
+  label: { color: '#94a3b8', fontSize: 13, fontWeight: '700', marginBottom: 6, textTransform: 'uppercase' },
+  input: { backgroundColor: '#0f172a', color: '#f8fafc', padding: 16, borderRadius: 12, fontSize: 18, marginBottom: 16, borderWidth: 1, borderColor: '#475569' },
+  row: { flexDirection: 'row', marginBottom: 16 },
+  tabBtn: { flex: 1, padding: 12, backgroundColor: '#334155', borderRadius: 10, alignItems: 'center' },
+  activeTab: { backgroundColor: '#6366f1' },
+  tabText: { color: 'white', fontWeight: 'bold' },
+  calcBtn: { backgroundColor: '#10b981', padding: 20, borderRadius: 15, alignItems: 'center', marginTop: 10, shadowColor: '#10b981', shadowOpacity: 0.3, shadowRadius: 10, elevation: 5 },
+  calcBtnText: { color: 'white', fontSize: 20, fontWeight: '800' },
+  resultCard: { marginTop: 25, backgroundColor: '#1e293b', padding: 25, borderRadius: 22, borderLeftWidth: 6, borderLeftColor: '#10b981' },
+  resultHeader: { color: '#94a3b8', fontSize: 14, fontWeight: '700', marginBottom: 15, textTransform: 'uppercase' },
+  resRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8, alignItems: 'center' },
+  resLabel: { color: '#cbd5e1', fontSize: 16 },
+  resVal: { color: '#f8fafc', fontSize: 16, fontWeight: '600' },
+  divider: { height: 1, backgroundColor: '#334155', marginVertical: 12 },
+  netLabel: { color: 'white', fontSize: 20, fontWeight: '800' },
+  netVal: { color: '#4ade80', fontSize: 32, fontWeight: '900' },
+});
